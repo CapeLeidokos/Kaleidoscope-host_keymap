@@ -2,7 +2,7 @@
 
 A untility that enables the generation of host_keymap header files for the Kaleidoscope firmware.
 
-## Prerequisits
+## Prerequisites
 
 This project requires the following libraries (and dev-packages) to be
 installed on a GNU/linux system.
