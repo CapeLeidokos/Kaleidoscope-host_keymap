@@ -35,7 +35,7 @@ make
 
 ```
 cd <repo_root>/build
-./host_keymap -p <base_dir>
+./host_keymap -b <base_dir>
 ```
 `base_dir` could e.g. be `$PWD/linux` to generate the host_keymap files
 in a subdirectory of the build tree.
