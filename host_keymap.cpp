@@ -20,5 +20,11 @@ int main(int argc, const char** argv) {
    
    LayoutProcessor lp(settings);
    
-   lp.readKeyboardLayouts();
+   try {
+      lp.readKeyboardLayouts();
+   }
+   catch(const std::runtime_error &e) {
+      std::cerr << "Error: " << e.what() << std::endl;
+      exit(1);
+   }
 }

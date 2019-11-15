@@ -21,4 +21,12 @@ struct KeymapInfo {
    void writeConfigFile(const Settings &settings) const;
    
    void writeConfigFile(std::ostream &file) const;
+   
+   static std::string convertToPrintableAscii(xkb_keysym_t key_sym, char ascii);
+   static std::string convertToPrintableUnicode(xkb_keysym_t key_sym);
+   
+   static std::string formatPrintableKeysymInfo(xkb_keysym_t key_sym);
+   static std::string formatNonPrintableKeysymInfo(xkb_keysym_t key_sym);
+   
+   static bool isPrintable(xkb_keysym_t key_sym);
 };

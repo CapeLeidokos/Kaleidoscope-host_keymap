@@ -13,7 +13,7 @@ struct XKB_KeyInfo
    int key_sym_;
    std::string desc_;
 };
-extern std::map<int, XKB_KeyInfo> non_unicode_key_sym_to_key_info;
+extern std::map<int, XKB_KeyInfo> non_printable_key_sym_to_key_info;
 
 struct XKB_KeyInfoUnicode
 {
@@ -22,6 +22,6 @@ struct XKB_KeyInfoUnicode
    int unicode_;
    std::string desc_;
 };
-extern std::map<int, XKB_KeyInfoUnicode> unicode_key_sym_to_key_info;
+extern std::map<int, XKB_KeyInfoUnicode> printable_key_sym_to_key_info;
 
 const char *kaleidoscopeNameFromKeyEvent(int event_code);

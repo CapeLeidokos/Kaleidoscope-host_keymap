@@ -2,6 +2,9 @@
 
 // Information extracted from xkbcommon-keysyms.h
 
+// Function macro invoked with arguments
+//    KEY_SYM_NAME, KEY_SYM, DESC
+//
 #define XKB_KEY_SYM_NAME__KEY_SYM__DESCRIPTION(OP) \
    OP(XKB_KEY_VoidSymbol, 0xffffff, "Void symbol ") \
    OP(XKB_KEY_BackSpace, 0xff08, "Back space, back char ") \

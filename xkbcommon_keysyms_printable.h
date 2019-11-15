@@ -2,6 +2,9 @@
 
 // Information extracted from xkbcommon-keysyms.h
 
+// Function macro invoked with arguments
+//    KEY_SYM_NAME, KEY_SYM, UNICODE, DESC
+//
 #define XKB_KEY_NAME__KEY_SYM__UNICODE__DESC(OP) \
    OP(XKB_KEY_space, 0x0020, 0x0020, "SPACE") \
    OP(XKB_KEY_exclam, 0x0021, 0x0021, "EXCLAMATION MARK") \

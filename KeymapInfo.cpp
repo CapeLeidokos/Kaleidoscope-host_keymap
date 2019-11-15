@@ -1,9 +1,12 @@
 #include "KeymapInfo.h"
 #include "Settings.h"
+#include "Exception.h"
+#include "static_maps.h"
 
 #include <iostream>
 #include <cassert>
 #include <sstream>
+#include <iomanip>
 
 #include <boost/filesystem.hpp>
 
@@ -25,28 +28,119 @@ void
 {
    std::cout << "ascii:" << std::endl;
    for(const auto &entry: ascii_to_kaleidoscope_key_code_) {
-      std::cout << "   " << entry.first 
-         << ": " << entry.second.format() << std::endl;
+      std::cout << "   " << convertToPrintableAscii(entry.second.key_sym_, entry.first)
+         << ": " << entry.second.convertToKaleidoscopeKey() << std::endl;
    }
    
    std::cout << "unicode:" << std::endl;
    for(const auto &entry: unicode_to_kaleidoscope_key_code_) {
-      std::cout << "   " << keySymToUtf8(entry.second.key_sym_)
-         << ": " << entry.second.format() << std::endl;
+      std::cout << "   " << convertToPrintableUnicode(entry.second.key_sym_)
+         << ": " << entry.second.convertToKaleidoscopeKey() << std::endl;
    }
    
    std::cout << "non printable:" << std::endl;
    for(const auto &entry: non_printable_to_kaleidoscope_key_code_) {
       std::cout << "   " << entry.first 
-         << ": " << entry.second.format() << std::endl;
+         << ": " << entry.second.convertToKaleidoscopeKey() << std::endl;
    }
+}
+
+std::string  
+   KeymapInfo
+      ::convertToPrintableAscii(xkb_keysym_t key_sym, char ascii)
+{
+   switch(key_sym) {
+      case XKB_KEY_Tab:
+         return "\\t";
+      case XKB_KEY_Return:
+         return "\\r";
+      case XKB_KEY_Linefeed:
+         return "\\n";
+      case XKB_KEY_Escape:
+         return "\\e";
+      case XKB_KEY_BackSpace:
+         return "\\b";
+   }
+   
+   return std::string{ascii};
+}
+
+std::string  
+   KeymapInfo
+      ::convertToPrintableUnicode(xkb_keysym_t key_sym)
+{
+   switch(key_sym) {
+      case XKB_KEY_Tab:
+         return "\\t";
+      case XKB_KEY_Return:
+         return "\\r";
+      case XKB_KEY_Linefeed:
+         return "\\n";
+      case XKB_KEY_Escape:
+         return "\\e";
+      case XKB_KEY_BackSpace:
+         return "\\b";
+   }
+   
+   return keySymToUtf8(key_sym);
+}
+
+bool   
+   KeymapInfo
+      ::isPrintable(xkb_keysym_t key_sym)
+{
+   return printable_key_sym_to_key_info.find(key_sym) 
+            != printable_key_sym_to_key_info.end();
+}
+
+std::string  
+   KeymapInfo
+      ::formatPrintableKeysymInfo(xkb_keysym_t key_sym)
+{
+   auto it = printable_key_sym_to_key_info.find(key_sym);
+   
+   if(it != printable_key_sym_to_key_info.end()) {
+   
+      std::ostringstream o;
+      o << " /* U+" << std::hex  << std::fixed << std::setw(4) << std::setfill('0')
+         << xkb_keysym_to_utf32(key_sym) << std::dec 
+         << ", " << it->second.name_;
+         
+      if(!it->second.desc_.empty()) {
+         o << ", " << it->second.desc_;
+      }
+      o << " */";
+         
+      return o.str();
+   }
+   
+   return formatNonPrintableKeysymInfo(key_sym);
+}
+
+std::string  
+   KeymapInfo
+      ::formatNonPrintableKeysymInfo(xkb_keysym_t key_sym)
+{   
+   auto it = non_printable_key_sym_to_key_info.find(key_sym);
+   
+   if(it == non_printable_key_sym_to_key_info.end()) {
+      return "";
+   }
+   
+   std::ostringstream o;
+   o << " /* " << it->second.name_;
+   if(!it->second.desc_.empty()) {
+      o << ", " << it->second.desc_;
+   }
+   o << " */";
+      
+   return o.str();
 }
 
 void 
    KeymapInfo
       ::writeConfigFile(const Settings &settings) const
 {
-   
    std::ostringstream o;
    o << settings.base_path_ << "/" << layout_;
    
@@ -56,8 +150,8 @@ void
    
    boost::system::error_code ec;
    if (!boost::filesystem::create_directories(o.str(), ec)) {
-      std::cerr << ec.message() << ": " << o.str() << "\n";
-      throw std::runtime_error("Couldn't create directory");
+      Exception{} << "Couldn't create directory: '" << o.str() << "': "
+         << ec.message();
    }
    
    std::ofstream file(o.str() + "/keymap.h");
@@ -99,16 +193,18 @@ void
    file << "#define _HOST_KEYMAP_ASCII_KEYMAP(OP) \\\n";
 
    for(const auto &entry: ascii_to_kaleidoscope_key_code_) {
-      file << "   OP('" << entry.first << "', "
-         << entry.second.format() << ") \\\n";
+      file << "   OP('" << convertToPrintableAscii(entry.second.key_sym_, entry.first) << "', "
+         << entry.second.convertToKaleidoscopeKey() << ")" 
+         << formatPrintableKeysymInfo(entry.second.key_sym_) << " \\\n";
    }
    file << "\n";
    
    file << "#define _HOST_KEYMAP_UNICODE_KEYMAP(OP) \\\n";
    
    for(const auto &entry: unicode_to_kaleidoscope_key_code_) {
-      file << "   OP(L'" << keySymToUtf8(entry.second.key_sym_) << "', "
-         << entry.second.format() << ") \\\n";
+      file << "   OP(L'" << convertToPrintableUnicode(entry.second.key_sym_) << "', "
+         << entry.second.convertToKaleidoscopeKey() << ")"
+         << formatPrintableKeysymInfo(entry.second.key_sym_) << " \\\n";
    }
    file << "\n";
    
@@ -116,7 +212,8 @@ void
    
    for(const auto &entry: non_printable_to_kaleidoscope_key_code_) {
       file << "   OP(" << entry.first << ", "
-         << entry.second.format() << ") \\\n";
+         << entry.second.convertToKaleidoscopeKey() << ")"
+         << formatNonPrintableKeysymInfo(entry.second.key_sym_) << " \\\n";
    }
    file << "\n";
    

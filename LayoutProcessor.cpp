@@ -1,6 +1,7 @@
 #include "LayoutProcessor.h"
 #include "KaleidoscopeKeycodeInfo.h"
 #include "KeymapInfo.h"
+#include "Exception.h"
 #include "static_maps.h"
 
 #include <exception>
@@ -17,11 +18,11 @@
    xkb_context_ = xkb_context_new(XKB_CONTEXT_NO_DEFAULT_INCLUDES);
    
    if(!xkb_context_) {
-      throw std::runtime_error{"Unable to create xkbcommon context"};
+      Exception{} << "Unable to create xkbcommon context";
    }
    
    if(!xkb_context_include_path_append(xkb_context_, "/usr/share/X11/xkb/")) {
-      throw std::runtime_error{"Failed appending include path"};
+      Exception{} << "Failed appending include path";
    }
 }
    
@@ -102,55 +103,54 @@ void
    
    auto num_modifiers_active = modifier_state.getNumModifiersActive();
    
-   constexpr std::size_t utf8_buffer_size = 7;
-   char utf8_buffer[utf8_buffer_size];
+   //if(KeymapInfo::isPrintable(key_sym)) {
    
-   auto utf8_bytes_written 
-      = xkb_keysym_to_utf8(key_sym , utf8_buffer, utf8_buffer_size);
+      constexpr std::size_t utf8_buffer_size = 7;
+      char utf8_buffer[utf8_buffer_size];
       
-   if(utf8_bytes_written > 0) {
-      
-      auto utf32 = xkb_keysym_to_utf32(key_sym);
-      
-      if(utf32 <= 127) {
+      auto utf8_bytes_written 
+         = xkb_keysym_to_utf8(key_sym , utf8_buffer, utf8_buffer_size);
          
-         // Is an ascii character
-         //
+      if(utf8_bytes_written > 0) {
+         
+         auto utf32 = xkb_keysym_to_utf32(key_sym);
+         
+         if(utf32 <= 127) {
+            
+            // Is an ascii character
+            //
+            addIfLessModifiersUsed(
+               keymap_info.ascii_to_kaleidoscope_key_code_,
+               char(utf32), 
+               key_info, 
+               num_modifiers_active
+            );
+         }
+         
          addIfLessModifiersUsed(
-            keymap_info.ascii_to_kaleidoscope_key_code_,
-            char(utf32), 
+            keymap_info.unicode_to_kaleidoscope_key_code_,
+            utf32, 
             key_info, 
             num_modifiers_active
          );
-       }
+            
+   //       std::cout << "      key_event: " << key_event 
+   //          << ", key_sym: " << key_sym
+   //          << ", kaleidoscope key: " << kaleidoscope_key_name
+   //          << ", utf8: " << utf8_buffer
+   //          << ", modifiers: " << modifier_bits
+   //          << " = " << getModifiersString(modifier_bits) << std::endl;
+      }
+   //}
       
-      addIfLessModifiersUsed(
-         keymap_info.unicode_to_kaleidoscope_key_code_,
-         utf32, 
-         key_info, 
-         num_modifiers_active
-      );
-         
-//       std::cout << "      key_event: " << key_event 
-//          << ", key_sym: " << key_sym
-//          << ", kaleidoscope key: " << kaleidoscope_key_name
-//          << ", utf8: " << utf8_buffer
-//          << ", modifiers: " << modifier_bits
-//          << " = " << getModifiersString(modifier_bits) << std::endl;
-      
-      return;
-   }
-      
-   // Not a unicode keysym
+   // Not a printable keysym
       
    constexpr std::size_t keysym_name_size = 100;
    char keysym_name[keysym_name_size];
    auto n_chars_transferred = xkb_keysym_get_name(key_sym, keysym_name, keysym_name_size);
    
    if(n_chars_transferred == 0) {
-      std::cerr << "Unable to get keysym name for key sym " << key_sym
-         << std::endl;
-      throw std::runtime_error("Unable to get keysym name");
+      Exception{} << "Unable to get keysym name for key sym " << key_sym;
    }
       
    addIfLessModifiersUsed(
@@ -160,9 +160,6 @@ void
       num_modifiers_active
    );
 }
-
-
-
 
 void 
    LayoutProcessor
@@ -262,15 +259,15 @@ void
    LayoutProcessor
       ::readKeyboardLayouts() 
 {
-    boost::char_separator<char> sep(", \n");
+   boost::char_separator<char> sep(", \n");
    
-//    std::string keyboard_layouts_string
-//       = getStdoutFromCommand("localectl list-x11-keymap-layouts");
-//       
-//    boost::tokenizer<boost::char_separator<char> > 
-//       layouts(keyboard_layouts_string, sep);
+   std::string keyboard_layouts_string
+      = getStdoutFromCommand("localectl list-x11-keymap-layouts");
+      
+   boost::tokenizer<boost::char_separator<char> > 
+      layouts(keyboard_layouts_string, sep);
    
-   std::vector<std::string> layouts = { "de" };
+   //std::vector<std::string> layouts = { "de" };
       
    for(const auto &layout: layouts) {
       

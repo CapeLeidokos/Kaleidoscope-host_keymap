@@ -11,7 +11,7 @@ struct KaleidoscopeKeycodeInfo {
    const char *kaleidoscope_key_;
    ModifierState modifier_state_;
    
-   std::string format() const {
+   std::string convertToKaleidoscopeKey() const {
       return modifier_state_.addModifiersToKey(kaleidoscope_key_);
    }
 };
