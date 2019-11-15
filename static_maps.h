@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <set>
 
 extern std::map<char, std::string> hid_code_to_hid_n;
 // extern std::map<std::string, char> hid_name_to_hid_code;
@@ -23,5 +24,7 @@ struct XKB_KeyInfoUnicode
    std::string desc_;
 };
 extern std::map<int, XKB_KeyInfoUnicode> printable_key_sym_to_key_info;
+
+extern std::set<std::string> known_xkb_key_names;
 
 const char *kaleidoscopeNameFromKeyEvent(int event_code);

@@ -5,7 +5,7 @@
 
 #include <iostream>
    
-void 
+int 
    Settings
       ::parse(int argc, const char** argv)
 {
@@ -16,15 +16,24 @@ void
       // The second is parameter to option
       // The third is description
       ("help,h", "print usage message")
-      ("base_path,b", value(&base_path_), "base path for directory creation")
+      ("base_path,b", value<std::string>(), "base path for directory creation")
       ;
    
    variables_map vm;
    store(parse_command_line(argc, argv, desc), vm);
    
-   if(base_path_.empty()) {
-      boost::filesystem::path full_path(boost::filesystem::current_path());
-      std::cout << "Basepath undefined. Setting it to PWD=" << full_path << std::endl;
-      base_path_ = full_path.string();
+   if (vm.count("help")) {
+      std::cout << "Usage: " << argv[0] << "[options]\n";
+      std::cout << desc;
+      return 1;
    }
+   
+   if(vm["base_path"].empty()) {
+      std::cerr << "Please define a base path" << std::endl;
+      return 2;
+   }
+   
+   base_path_ = vm["base_path"].as<std::string>();
+   
+   return 0;
 }

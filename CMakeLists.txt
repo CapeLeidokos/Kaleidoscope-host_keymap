@@ -15,6 +15,7 @@ add_executable(host_keymap
    ModifierState.cpp
    Settings.cpp
    static_maps.cpp
+   extra_layouts.cpp
 )
 
 target_link_libraries(

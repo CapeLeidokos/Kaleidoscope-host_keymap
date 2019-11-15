@@ -2,6 +2,8 @@
 
 #include "xkbcommon/xkbcommon.h"
 
+#include <string>
+
 class KeymapInfo;
 struct Settings;
 class ModifierState;
@@ -14,7 +16,8 @@ class LayoutProcessor {
       ~LayoutProcessor();
       
       void readKeyboardLayouts();
-      void processLayout(const char *layout, const char *variant);
+      void processLayout(const std::string &layout,
+                         const std::string &variant);
    
       void parseKeymap(KeymapInfo &keymap_info,
                        struct xkb_keymap *keymap, 

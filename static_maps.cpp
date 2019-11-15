@@ -62,6 +62,16 @@ std::map<int, XKB_KeyInfoUnicode> printable_key_sym_to_key_info = {
    {0, XKB_KeyInfoUnicode{"", 0, 0, ""}}
 };
 #undef INIT_PRINTABLE_KEY_SYM_TO_KEY_INFO
+
+#define INIT_NON_PRINTABLE_KNOWN_KEYSYMS(KEY_SYM_NAME, KEY_SYM, DESC) #KEY_SYM_NAME,
+#define INIT_PRINTABLE_KNOWN_KEYSYMS(KEY_SYM_NAME, KEY_SYM, UNICODE, DESC) #KEY_SYM_NAME,
+std::set<std::string> known_xkb_key_names = {
+   XKB_KEY_SYM_NAME__KEY_SYM__DESCRIPTION(INIT_NON_PRINTABLE_KNOWN_KEYSYMS)
+   XKB_KEY_NAME__KEY_SYM__UNICODE__DESC(INIT_PRINTABLE_KNOWN_KEYSYMS)
+   ""
+};
+#undef INIT_NON_PRINTABLE_KNOWN_KEYSYMS
+#undef INIT_PRINTABLE_KNOWN_KEYSYMS
    
 const char *kaleidoscopeNameFromKeyEvent(int event_code) {
    

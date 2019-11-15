@@ -16,7 +16,11 @@
 int main(int argc, const char** argv) {
    
    Settings settings;
-   settings.parse(argc, argv);
+   auto parse_result = settings.parse(argc, argv);
+   
+   if(parse_result != 0) {
+      return parse_result - 1;
+   }
    
    LayoutProcessor lp(settings);
    

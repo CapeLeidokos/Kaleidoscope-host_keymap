@@ -29,4 +29,6 @@ struct KeymapInfo {
    static std::string formatNonPrintableKeysymInfo(xkb_keysym_t key_sym);
    
    static bool isPrintable(xkb_keysym_t key_sym);
+   static bool isNonPrintable(xkb_keysym_t key_sym);
+   static bool isKnown(const std::string &name);
 };

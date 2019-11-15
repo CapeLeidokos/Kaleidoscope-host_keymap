@@ -3,11 +3,13 @@
 #include "KeymapInfo.h"
 #include "Exception.h"
 #include "static_maps.h"
+#include "extra_layouts.h"
 
 #include <exception>
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <set>
 
 #include <boost/tokenizer.hpp>
 
@@ -228,13 +230,13 @@ void
 
 void 
    LayoutProcessor
-      ::processLayout(const char *layout, const char *variant)
+      ::processLayout(const std::string &layout, const std::string &variant)
 { 
    struct xkb_rule_names rule_names;
       rule_names.rules = "evdev";
       rule_names.model = "pc105";
-      rule_names.layout = layout;
-      rule_names.variant = variant;
+      rule_names.layout = layout.c_str();
+      rule_names.variant = variant.c_str();
       rule_names.options = "";
    
    auto keymap = xkb_keymap_new_from_names(xkb_context_, 
@@ -249,6 +251,9 @@ void
       KeymapInfo keymap_info;
       keymap_info.layout_ = layout;
       keymap_info.variant_ = variant;
+      if(keymap_info.variant_.empty()) {
+         keymap_info.variant_ = "standard";
+      }
       this->parseKeymap(keymap_info, keymap, &rule_names);
       xkb_keymap_unref(keymap);
       keymap = nullptr;
@@ -259,6 +264,8 @@ void
    LayoutProcessor
       ::readKeyboardLayouts() 
 {
+   std::map<std::string, std::set<std::string>> variants;
+   
    boost::char_separator<char> sep(", \n");
    
    std::string keyboard_layouts_string
@@ -280,20 +287,45 @@ void
       // or any other string that contains spaces.
       //
       std::size_t found = variants_string.find(" ");
-      if(found != std::string::npos) {
-         this->processLayout(layout.c_str(), "");
-         continue;
+      if(found == std::string::npos) {
+         
+         boost::tokenizer<boost::char_separator<char> > 
+            variant_tokens(variants_string, sep);
+            
+         //std::cout << layout << std::endl;
+            
+         for(const auto &variant_name: variant_tokens) {
+            //std::cout << "   " << variant << std::endl;
+            
+            variants[layout].insert(variant_name);
+         }
       }
       
-      boost::tokenizer<boost::char_separator<char> > 
-         variants(variants_string, sep);
-         
-      //std::cout << layout << std::endl;
-         
-      for(const auto &variant: variants) {
-         //std::cout << "   " << variant << std::endl;
-         
-         this->processLayout(layout.c_str(), variant.c_str());
+      variants[layout].insert("");
+   }
+   
+   // Some extra layouts and variants are not known to 
+   // localectl list-x11-keymap-layouts.
+   // We add them manually.
+   //
+   for(const auto &extra_layout: extra_layouts) {
+      variants[extra_layout.first].insert(extra_layout.second.begin(),
+                                          extra_layout.second.end());
+   }
+   
+   for(const auto &variant_entry: variants) {
+      
+      const auto &layout_name = variant_entry.first;
+      const auto &variant_list = variant_entry.second;
+      
+      for(const auto &variant_name: variant_list) {
+         try {
+            this->processLayout(layout_name, variant_name);
+         }
+         catch(...) {
+            std::cerr << "Error reading layout " << layout_name 
+               << ":" << variant_name << std::endl;
+         }
       }
    }
 }
