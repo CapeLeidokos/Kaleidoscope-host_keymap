@@ -10,7 +10,11 @@ find_package(Boost COMPONENTS
 
 add_executable(host_keymap 
    host_keymap.cpp
-   static_maps.cpp 
+   KeymapInfo.cpp
+   LayoutProcessor.cpp
+   ModifierState.cpp
+   Settings.cpp
+   static_maps.cpp
 )
 
 target_link_libraries(
